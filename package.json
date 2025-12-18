@@ -11,10 +11,10 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@vercel/kv": "^1.0.0",
     "axios": "^1.13.2",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^17.2.3",
-    "node-cron": "^4.2.1",
     "rss-parser": "^3.13.0"
   }
 }

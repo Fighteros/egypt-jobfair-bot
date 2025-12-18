@@ -5,6 +5,7 @@ node_modules/
 .env
 
 # Storage file (contains sent notification keys)
+# Note: No longer used - storage is now handled by Vercel KV
 sent.json
 
 # Logs

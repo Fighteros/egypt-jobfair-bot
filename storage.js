@@ -1,20 +1,26 @@
 // storage.js
-// Handles persistence of sent notifications to prevent duplicates
+// Handles persistence of sent notifications to prevent duplicates using Vercel KV
+//
+// This module provides PERSISTENT storage that survives across serverless function invocations.
+// All operations are async and use Vercel KV, ensuring state persists between cron job runs.
+//
+// Key characteristics:
+// - Stateless: No in-memory state persists between function invocations
+// - Persistent: All state is stored in Vercel KV (external database)
+// - Atomic: Each load/save operation is independent and atomic
 
-const fs = require("fs");
-const path = require("path");
+const { kv } = require("@vercel/kv");
 
-const SENT_FILE = path.join(__dirname, "sent.json");
+const SENT_KEY = "jobfair:sent";
 
 /**
- * Load sent notifications from file
- * @returns {Set} Set of sent notification keys
+ * Load sent notifications from Vercel KV
+ * @returns {Promise<Set>} Set of sent notification keys
  */
-function loadSent() {
+async function loadSent() {
   try {
-    if (fs.existsSync(SENT_FILE)) {
-      const data = fs.readFileSync(SENT_FILE, "utf8");
-      const sentArray = JSON.parse(data);
+    const sentArray = await kv.get(SENT_KEY);
+    if (Array.isArray(sentArray)) {
       return new Set(sentArray);
     }
   } catch (error) {
@@ -24,13 +30,13 @@ function loadSent() {
 }
 
 /**
- * Save sent notifications to file
+ * Save sent notifications to Vercel KV
  * @param {Set} sent - Set of sent notification keys
  */
-function saveSent(sent) {
+async function saveSent(sent) {
   try {
     const sentArray = Array.from(sent);
-    fs.writeFileSync(SENT_FILE, JSON.stringify(sentArray, null, 2), "utf8");
+    await kv.set(SENT_KEY, sentArray);
   } catch (error) {
     console.error("Error saving sent notifications:", error.message);
   }
@@ -69,11 +75,9 @@ function markEventAsSent(sent, event) {
 /**
  * Clear all sent notifications (useful for testing or reset)
  */
-function clearSent() {
+async function clearSent() {
   try {
-    if (fs.existsSync(SENT_FILE)) {
-      fs.unlinkSync(SENT_FILE);
-    }
+    await kv.del(SENT_KEY);
   } catch (error) {
     console.error("Error clearing sent notifications:", error.message);
   }
